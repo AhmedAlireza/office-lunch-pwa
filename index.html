@@ -49,7 +49,7 @@
       margin-top: 6px;
     }
 
-    input {
+    input[type="text"] {
       width: 100%;
       padding: 12px;
       margin-top: 10px;
@@ -62,6 +62,7 @@
       display: flex;
       gap: 8px;
       margin-top: 10px;
+      align-items: center;
     }
 
     .upi-text {
@@ -72,6 +73,17 @@
       font-weight: bold;
       background: #f9f9f9;
       user-select: all;
+    }
+
+    .radio-group {
+      text-align: left;
+      margin-top: 12px;
+    }
+
+    .radio-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
     }
 
     button {
@@ -88,7 +100,7 @@
 
     .secondary-btn {
       background: #607d8b;
-      padding: 12px 16px;
+      padding: 10px 14px;
       width: auto;
     }
 
@@ -118,17 +130,32 @@
   <div class="card">
     <h3>📱 Pay via UPI</h3>
 
+    <!-- UPI ID + COPY -->
     <div class="upi-box">
       <div id="upiId" class="upi-text">9566433427@ybl</div>
       <button class="secondary-btn" onclick="copyUPI()">Copy</button>
     </div>
 
-    <button onclick="openUPIApp()">Open UPI App</button>
+    <!-- RADIO OPTIONS -->
+    <div class="radio-group">
+      <label>
+        <input type="radio" name="upiApp" value="gpay">
+        Google Pay
+      </label>
+
+      <label>
+        <input type="radio" name="upiApp" value="phonepe">
+        PhonePe
+      </label>
+    </div>
+
+    <!-- OK BUTTON -->
+    <button onclick="openSelectedUPI()">OK</button>
 
     <p class="note">
       1️⃣ Copy the UPI ID<br>
-      2️⃣ Click <b>Open UPI App</b><br>
-      3️⃣ Paste the UPI ID in your preferred app and pay
+      2️⃣ Select your UPI app<br>
+      3️⃣ Click OK and paste the UPI ID in the app
     </p>
 
     <p class="note">
@@ -153,19 +180,17 @@
   </div>
 
   <script>
-    /* ================= CONFIG ================= */
+    /* ===== CONFIG ===== */
 
-    // Menu API (Google Sheet CONFIG)
     const MENU_API =
       "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
 
-    // Tracker API (CORS-enabled)
     const TRACKER_API =
       "https://script.google.com/macros/s/AKfycbzuBhQ0RMVEA85WzzU2y3I-8Hv4ATZrIGYT7ZNAiZ0NDCmOCjMqG0BoeHZBPEvKbe0rgw/exec";
 
     const UPI_ID = "9566433427@ybl";
 
-    /* ================= LOAD MENU ================= */
+    /* ===== LOAD MENU ===== */
     fetch(MENU_API)
       .then(res => res.json())
       .then(data => {
@@ -173,36 +198,38 @@
           data.menu || "Menu not available";
         document.getElementById("price").innerText =
           data.price || "--";
-      })
-      .catch(() => {
-        document.getElementById("menu").innerHTML =
-          "Unable to load menu";
       });
 
-    /* ================= COPY UPI ================= */
+    /* ===== COPY UPI ===== */
     function copyUPI() {
       navigator.clipboard.writeText(UPI_ID);
-      alert("UPI ID copied. Open your UPI app and paste it to pay.");
+      alert("UPI ID copied. Now select app and click OK.");
     }
 
-    /* ================= OPEN UPI APP ================= */
-    function openUPIApp() {
-      // Opens a UPI-capable app (Android decides which one)
-      window.location.href = "upi://pay";
-    }
+    /* ===== OPEN SELECTED APP ===== */
+    function openSelectedUPI() {
+      const selected =
+        document.querySelector('input[name="upiApp"]:checked');
 
-    /* ================= CONFIRM LUNCH ================= */
-    function confirmLunch() {
-      const name = document.getElementById("empName").value.trim();
-      const mobile = document.getElementById("mobile").value.trim();
-
-      if (!name || !mobile) {
-        alert("Please enter Name and Transaction Mobile Number");
+      if (!selected) {
+        alert("Please select a UPI app");
         return;
       }
 
-      if (mobile.length < 4) {
-        alert("Please enter a valid mobile number (minimum 4 digits)");
+      if (selected.value === "gpay") {
+        window.location.href = "tez://upi/pay";
+      } else if (selected.value === "phonepe") {
+        window.location.href = "phonepe://pay";
+      }
+    }
+
+    /* ===== CONFIRM LUNCH ===== */
+    function confirmLunch() {
+      const name = empName.value.trim();
+      const mobile = mobile.value.trim();
+
+      if (!name || !mobile) {
+        alert("Please enter Name and Mobile Number");
         return;
       }
 
@@ -216,20 +243,15 @@
         if (resp.status === "SUCCESS") {
           document.body.innerHTML =
             "<h2>✅ Thank you!</h2><p>Your lunch is confirmed.</p>";
-
-          setTimeout(() => {
-            window.close();
-          }, 2000);
+          setTimeout(() => window.close(), 2000);
         } else {
-          alert("Unable to save confirmation. Please try again.");
+          alert("Unable to save confirmation");
         }
       })
-      .catch(() => {
-        alert("Network error. Please try again.");
-      });
+      .catch(() => alert("Network error"));
     }
 
-    /* ================= SERVICE WORKER ================= */
+    /* ===== SERVICE WORKER ===== */
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js");
     }
@@ -237,3 +259,4 @@
 
 </body>
 </html>
+

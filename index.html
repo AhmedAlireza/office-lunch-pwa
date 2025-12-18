@@ -40,7 +40,7 @@
     .price {
       font-size: 18px;
       font-weight: bold;
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .note {
@@ -54,6 +54,15 @@
       margin-top: 12px;
     }
 
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
     button {
       background: #2e7d32;
       color: #fff;
@@ -63,7 +72,7 @@
       font-size: 16px;
       width: 100%;
       cursor: pointer;
-      margin-top: 10px;
+      margin-top: 12px;
     }
 
     button:hover {
@@ -88,16 +97,16 @@
     </div>
   </div>
 
-  <!-- PAYMENT CARD (QR ONLY) -->
+  <!-- PAYMENT CARD -->
   <div class="card">
     <h3>📱 Pay via UPI (Scan Only)</h3>
 
-    <!-- Vendor UPI QR -->
-    <img src="vendor-upi-qr.png" alt="Vendor UPI QR" class="qr">
+    <img src="vendor-upi-qr.png"
+         alt="Vendor UPI QR"
+         class="qr">
 
     <p class="note">
-      Scan using <b>GPay / PhonePe / Paytm</b><br>
-      (UPI links are blocked for security)
+      Scan using <b>GPay / PhonePe / Paytm</b>
     </p>
 
     <p class="note">
@@ -108,18 +117,36 @@
 
   <!-- CONFIRMATION CARD -->
   <div class="card">
-    <h3>✅ Confirm Lunch</h3>
-    <p class="note">After payment, please submit confirmation</p>
-    <button onclick="openForm()">Confirm Lunch</button>
+    <h3>🧾 Lunch Confirmation</h3>
+
+    <input id="empName" type="text"
+           placeholder="Your Name">
+
+    <input id="mobile" type="text"
+           placeholder="Transaction Mobile Number"
+           maxlength="10">
+
+    <button onclick="confirmLunch()">Confirm Lunch</button>
+
+    <p class="note">
+      Please confirm only after successful UPI payment
+    </p>
   </div>
 
   <script>
-    // 🔗 GOOGLE APPS SCRIPT WEB APP URL
-    const API_URL = "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
+    /* ===== CONFIG ===== */
 
-    // 🔄 FETCH MENU FROM GOOGLE SHEET
-    fetch(API_URL)
-      .then(response => response.json())
+    // MENU API (Google Sheet CONFIG)
+    const MENU_API =
+      "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
+
+    // TRACKER API (YOUR URL)
+    const TRACKER_API =
+      "https://script.google.com/macros/s/AKfycbzuBhQ0RMVEA85WzzU2y3I-8Hv4ATZrIGYT7ZNAiZ0NDCmOCjMqG0BoeHZBPEvKbe0rgw/exec";
+
+    /* ===== LOAD MENU ===== */
+    fetch(MENU_API)
+      .then(res => res.json())
       .then(data => {
         document.getElementById("menu").innerHTML =
           data.menu || "Menu not available";
@@ -131,13 +158,48 @@
           "Unable to load menu";
       });
 
-    // 📝 GOOGLE FORM / CONFIRMATION LINK
-    function openForm() {
-      window.location.href =
-        "https://docs.google.com/spreadsheets/d/1QKKtHNseaS4-VPKDnrkS4BnDR3hl9Bh2sJGE0xKmTRU/edit?usp=sharing";
+    /* ===== CONFIRM LUNCH ===== */
+    function confirmLunch() {
+      const name = document.getElementById("empName").value.trim();
+      const mobile = document.getElementById("mobile").value.trim();
+
+      if (!name || !mobile) {
+        alert("Please enter Name and Transaction Mobile Number");
+        return;
+      }
+
+      if (mobile.length < 4) {
+        alert("Please enter valid mobile number (minimum 4 digits)");
+        return;
+      }
+
+      fetch(TRACKER_API, {
+        method: "POST",
+        body: JSON.stringify({
+          name: name,
+          mobile: mobile
+        })
+      })
+      .then(res => res.json())
+      .then(resp => {
+        if (resp.status === "SUCCESS") {
+          document.body.innerHTML =
+            "<h2>✅ Thank you!</h2>" +
+            "<p>Your lunch is confirmed.</p>";
+
+          setTimeout(() => {
+            window.close();
+          }, 2000);
+        } else {
+          alert("Unable to save confirmation. Please try again.");
+        }
+      })
+      .catch(() => {
+        alert("Network error. Please try again.");
+      });
     }
 
-    // ⚙️ SERVICE WORKER
+    /* ===== SERVICE WORKER ===== */
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js");
     }

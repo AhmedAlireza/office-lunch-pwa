@@ -37,21 +37,6 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
-    button {
-      background: #2e7d32;
-      color: #fff;
-      border: none;
-      padding: 14px;
-      border-radius: 8px;
-      font-size: 16px;
-      width: 100%;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #256428;
-    }
-
     .price {
       font-size: 18px;
       font-weight: bold;
@@ -61,6 +46,28 @@
     .note {
       font-size: 13px;
       color: #555;
+      margin-top: 6px;
+    }
+
+    .qr {
+      width: 200px;
+      margin-top: 12px;
+    }
+
+    button {
+      background: #2e7d32;
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      width: 100%;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #256428;
     }
   </style>
 </head>
@@ -81,11 +88,22 @@
     </div>
   </div>
 
-  <!-- PAYMENT CARD -->
+  <!-- PAYMENT CARD (QR ONLY) -->
   <div class="card">
-    <h3>📱 Pay via UPI</h3>
-    <p class="note">Pay directly to vendor</p>
-    <button onclick="payUPI()">Pay Now</button>
+    <h3>📱 Pay via UPI (Scan Only)</h3>
+
+    <!-- Vendor UPI QR -->
+    <img src="vendor-upi-qr.png" alt="Vendor UPI QR" class="qr">
+
+    <p class="note">
+      Scan using <b>GPay / PhonePe / Paytm</b><br>
+      (UPI links are blocked for security)
+    </p>
+
+    <p class="note">
+      UPI ID: <b>9566433427@ybl</b><br>
+      Vendor: <b>Sasi Canteens</b>
+    </p>
   </div>
 
   <!-- CONFIRMATION CARD -->
@@ -96,7 +114,7 @@
   </div>
 
   <script>
-    // 🔗 PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
+    // 🔗 GOOGLE APPS SCRIPT WEB APP URL
     const API_URL = "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
 
     // 🔄 FETCH MENU FROM GOOGLE SHEET
@@ -113,22 +131,10 @@
           "Unable to load menu";
       });
 
-    // 💳 UPI PAYMENT
-    function payUPI() {
-      const amount =
-        document.getElementById("price").innerText || "";
-
-      const upiUrl =
-        "upi://pay?pa=9566433427@ybl&pn=SasiCanteens%20Name&am=" +
-        amount +
-        "&cu=INR";
-
-      window.location.href = upiUrl;
-    }
-
-    // 📝 GOOGLE FORM CONFIRMATION
+    // 📝 GOOGLE FORM / CONFIRMATION LINK
     function openForm() {
-      window.location.href ="https://docs.google.com/spreadsheets/d/1QKKtHNseaS4-VPKDnrkS4BnDR3hl9Bh2sJGE0xKmTRU/edit?usp=sharing";
+      window.location.href =
+        "https://docs.google.com/spreadsheets/d/1QKKtHNseaS4-VPKDnrkS4BnDR3hl9Bh2sJGE0xKmTRU/edit?usp=sharing";
     }
 
     // ⚙️ SERVICE WORKER

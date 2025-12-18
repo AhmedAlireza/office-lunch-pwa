@@ -75,7 +75,7 @@
   <!-- MENU CARD -->
   <div class="card">
     <h3>📅 Today’s Menu</h3>
-    <div id="menu">Menu not updated</div>
+    <div id="menu">Loading menu...</div>
     <div class="price">
       💰 Price: ₹<span id="price">--</span>
     </div>
@@ -96,30 +96,42 @@
   </div>
 
   <script>
-    /* LOAD MENU FROM ADMIN PANEL */
-    document.getElementById("menu").innerHTML =
-      localStorage.getItem("menu") || "Menu not updated";
+    // 🔗 PASTE YOUR GOOGLE APPS SCRIPT WEB APP URL HERE
+    const API_URL = "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
 
-    document.getElementById("price").innerText =
-      localStorage.getItem("price") || "--";
+    // 🔄 FETCH MENU FROM GOOGLE SHEET
+    fetch(API_URL)
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById("menu").innerHTML =
+          data.menu || "Menu not available";
+        document.getElementById("price").innerText =
+          data.price || "--";
+      })
+      .catch(() => {
+        document.getElementById("menu").innerHTML =
+          "Unable to load menu";
+      });
 
-    /* UPI PAYMENT */
+    // 💳 UPI PAYMENT
     function payUPI() {
-      const amount = localStorage.getItem("price") || "";
+      const amount =
+        document.getElementById("price").innerText || "";
+
       const upiUrl =
-        "upi://pay?pa=9566433427@ybl&pn=RezaCanteens%20Name&am=" +
+        "upi://pay?pa=9566433427@ybl&pn=SasiCanteens%20Name&am=" +
         amount +
         "&cu=INR";
 
       window.location.href = upiUrl;
     }
 
-    /* GOOGLE FORM LINK */
+    // 📝 GOOGLE FORM CONFIRMATION
     function openForm() {
-      window.location.href = "https://forms.gle/YOUR_FORM_LINK";
+      window.location.href ="https://docs.google.com/spreadsheets/d/1QKKtHNseaS4-VPKDnrkS4BnDR3hl9Bh2sJGE0xKmTRU/edit?usp=sharing";
     }
 
-    /* REGISTER SERVICE WORKER */
+    // ⚙️ SERVICE WORKER
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js");
     }

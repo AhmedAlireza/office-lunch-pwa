@@ -116,17 +116,19 @@
 
   <!-- PAYMENT CARD -->
   <div class="card">
-    <h3>📱 Pay via UPI (Copy & Pay)</h3>
+    <h3>📱 Pay via UPI</h3>
 
     <div class="upi-box">
       <div id="upiId" class="upi-text">9566433427@ybl</div>
       <button class="secondary-btn" onclick="copyUPI()">Copy</button>
     </div>
 
+    <button onclick="openUPIApp()">Open UPI App</button>
+
     <p class="note">
       1️⃣ Copy the UPI ID<br>
-      2️⃣ Open your preferred UPI app (GPay / PhonePe / Paytm / BHIM)<br>
-      3️⃣ Paste the UPI ID and complete payment
+      2️⃣ Click <b>Open UPI App</b><br>
+      3️⃣ Paste the UPI ID in your preferred app and pay
     </p>
 
     <p class="note">
@@ -181,6 +183,12 @@
     function copyUPI() {
       navigator.clipboard.writeText(UPI_ID);
       alert("UPI ID copied. Open your UPI app and paste it to pay.");
+    }
+
+    /* ================= OPEN UPI APP ================= */
+    function openUPIApp() {
+      // Opens a UPI-capable app (Android decides which one)
+      window.location.href = "upi://pay";
     }
 
     /* ================= CONFIRM LUNCH ================= */

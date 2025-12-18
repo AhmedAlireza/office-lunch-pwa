@@ -60,7 +60,7 @@
 
     .upi-box {
       display: flex;
-      gap: 6px;
+      gap: 8px;
       margin-top: 10px;
     }
 
@@ -71,6 +71,7 @@
       border-radius: 6px;
       font-weight: bold;
       background: #f9f9f9;
+      user-select: all;
     }
 
     button {
@@ -87,8 +88,8 @@
 
     .secondary-btn {
       background: #607d8b;
+      padding: 12px 16px;
       width: auto;
-      padding: 12px;
     }
 
     button:hover {
@@ -115,19 +116,17 @@
 
   <!-- PAYMENT CARD -->
   <div class="card">
-    <h3>📱 Pay via UPI ID</h3>
+    <h3>📱 Pay via UPI (Copy & Pay)</h3>
 
     <div class="upi-box">
-      <div id="upiId" class="upi-text">
-        9566433427@ybl
-      </div>
+      <div id="upiId" class="upi-text">9566433427@ybl</div>
       <button class="secondary-btn" onclick="copyUPI()">Copy</button>
     </div>
 
-    <button onclick="openUPI()">Pay Now</button>
-
     <p class="note">
-      Copy the UPI ID → Click Pay Now → Paste in UPI app and pay
+      1️⃣ Copy the UPI ID<br>
+      2️⃣ Open your preferred UPI app (GPay / PhonePe / Paytm / BHIM)<br>
+      3️⃣ Paste the UPI ID and complete payment
     </p>
 
     <p class="note">
@@ -152,17 +151,19 @@
   </div>
 
   <script>
-    /* ===== CONFIG ===== */
+    /* ================= CONFIG ================= */
 
+    // Menu API (Google Sheet CONFIG)
     const MENU_API =
       "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
 
+    // Tracker API (CORS-enabled)
     const TRACKER_API =
       "https://script.google.com/macros/s/AKfycbzuBhQ0RMVEA85WzzU2y3I-8Hv4ATZrIGYT7ZNAiZ0NDCmOCjMqG0BoeHZBPEvKbe0rgw/exec";
 
     const UPI_ID = "9566433427@ybl";
 
-    /* ===== LOAD MENU ===== */
+    /* ================= LOAD MENU ================= */
     fetch(MENU_API)
       .then(res => res.json())
       .then(data => {
@@ -170,27 +171,30 @@
           data.menu || "Menu not available";
         document.getElementById("price").innerText =
           data.price || "--";
+      })
+      .catch(() => {
+        document.getElementById("menu").innerHTML =
+          "Unable to load menu";
       });
 
-    /* ===== COPY UPI ===== */
+    /* ================= COPY UPI ================= */
     function copyUPI() {
       navigator.clipboard.writeText(UPI_ID);
-      alert("UPI ID copied");
+      alert("UPI ID copied. Open your UPI app and paste it to pay.");
     }
 
-    /* ===== OPEN UPI APP ===== */
-    function openUPI() {
-      // This only opens the UPI app chooser (safe)
-      window.location.href = "upi://";
-    }
-
-    /* ===== CONFIRM LUNCH ===== */
+    /* ================= CONFIRM LUNCH ================= */
     function confirmLunch() {
-      const name = empName.value.trim();
-      const mobile = mobile.value.trim();
+      const name = document.getElementById("empName").value.trim();
+      const mobile = document.getElementById("mobile").value.trim();
 
       if (!name || !mobile) {
-        alert("Please enter Name and Mobile Number");
+        alert("Please enter Name and Transaction Mobile Number");
+        return;
+      }
+
+      if (mobile.length < 4) {
+        alert("Please enter a valid mobile number (minimum 4 digits)");
         return;
       }
 
@@ -204,15 +208,20 @@
         if (resp.status === "SUCCESS") {
           document.body.innerHTML =
             "<h2>✅ Thank you!</h2><p>Your lunch is confirmed.</p>";
-          setTimeout(() => window.close(), 2000);
+
+          setTimeout(() => {
+            window.close();
+          }, 2000);
         } else {
-          alert("Unable to save confirmation");
+          alert("Unable to save confirmation. Please try again.");
         }
       })
-      .catch(() => alert("Network error"));
+      .catch(() => {
+        alert("Network error. Please try again.");
+      });
     }
 
-    /* ===== SERVICE WORKER ===== */
+    /* ================= SERVICE WORKER ================= */
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("service-worker.js");
     }

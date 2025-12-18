@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Lunch Admin</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body {
+  font-family: Arial;
+  padding: 20px;
+}
+input, textarea, button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+}
+button {
+  background: #2e7d32;
+  color: white;
+  border: none;
+  border-radius: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🔐 Lunch Admin Panel</h2>
+
+<h3>📅 Update Today’s Menu</h3>
+<textarea id="menu" rows="5"
+placeholder="Rice, Dal, Sabzi, Chapati, Curd"></textarea>
+
+<input id="price" type="number" placeholder="Lunch Price ₹">
+
+<button onclick="saveMenu()">Save Menu</button>
+
+<hr>
+
+<h3>📊 Lunch Count</h3>
+<p>
+👉 Open Google Form → Responses tab → Count “Yes”
+</p>
+
+<script>
+function saveMenu() {
+  localStorage.setItem("menu",
+    document.getElementById("menu").value.replace(/\n/g,"<br>")
+  );
+  localStorage.setItem("price",
+    document.getElementById("price").value
+  );
+  alert("Menu updated successfully");
+}
+</script>
+
+</body>
+</html>

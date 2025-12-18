@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Office Lunch</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2e7d32">
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+  margin: 0;
+  padding: 15px;
+  text-align: center;
+}
+.card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+button {
+  background: #2e7d32;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  width: 100%;
+}
+button:disabled {
+  background: #aaa;
+}
+.logo {
+  max-width: 120px;
+  margin-bottom: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<img src="logo.png" class="logo">
+
+<h2>🍽️ Office Lunch</h2>
+
+<div class="card">
+  <h3>📅 Today’s Menu</h3>
+  <div id="menu"></div>
+  <p><b>Price:</b> ₹<span id="price"></span></p>
+</div>
+
+<div class="card">
+  <h3>📱 Pay via UPI</h3>
+  <button id="payBtn" onclick="payUPI()">Pay Now</button>
+</div>
+
+<div class="card">
+  <h3>✅ Confirm Payment</h3>
+  <button id="confirmBtn" onclick="openForm()">Confirm Lunch</button>
+</div>
+
+<p id="lockMsg" style="color:red;"></p>
+
+<script>
+/* ⏰ TIME LOCK */
+const now = new Date();
+const lockTime = new Date();
+lockTime.setHours(11,30,0);
+
+if (now > lockTime) {
+  document.getElementById("payBtn").disabled = true;
+  document.getElementById("confirmBtn").disabled = true;
+  document.getElementById("lockMsg").innerText =
+    "⛔ Lunch confirmation closed for today";
+}
+
+/* MENU LOAD */
+document.getElementById("menu").innerHTML =
+  localStorage.getItem("menu") || "Menu not updated";
+document.getElementById("price").innerText =
+  localStorage.getItem("price") || "--";
+
+/* UPI PAYMENT */
+function payUPI() {
+  window.location.href =
+    "upi://pay?pa=vendor@upi&pn=Vendor&am=" +
+    localStorage.getItem("price") +
+    "&cu=INR";
+}
+
+/* GOOGLE FORM */
+function openForm() {
+  window.location.href =
+    "https://forms.gle/YOUR_FORM_LINK";
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+
+</body>
+</html>

@@ -1,108 +1,129 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Office Lunch</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#2e7d32">
+  <title>Office Lunch</title>
 
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6f8;
-  margin: 0;
-  padding: 15px;
-  text-align: center;
-}
-.card {
-  background: #fff;
-  padding: 15px;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-button {
-  background: #2e7d32;
-  color: #fff;
-  border: none;
-  padding: 14px;
-  border-radius: 8px;
-  font-size: 16px;
-  width: 100%;
-}
-button:disabled {
-  background: #aaa;
-}
-.logo {
-  max-width: 120px;
-  margin-bottom: 10px;
-}
-</style>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2e7d32">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .logo {
+      max-width: 120px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      color: #2e7d32;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    button {
+      background: #2e7d32;
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 16px;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #256428;
+    }
+
+    .price {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .note {
+      font-size: 13px;
+      color: #555;
+    }
+  </style>
 </head>
 
 <body>
 
-<img src="logo.png" class="logo">
+  <!-- LOGO -->
+  <img src="logo.png" alt="Company Logo" class="logo">
 
-<h2>🍽️ Office Lunch</h2>
+  <h1>🍽️ Office Lunch</h1>
 
-<div class="card">
-  <h3>📅 Today’s Menu</h3>
-  <div id="menu"></div>
-  <p><b>Price:</b> ₹<span id="price"></span></p>
-</div>
+  <!-- MENU CARD -->
+  <div class="card">
+    <h3>📅 Today’s Menu</h3>
+    <div id="menu">Menu not updated</div>
+    <div class="price">
+      💰 Price: ₹<span id="price">--</span>
+    </div>
+  </div>
 
-<div class="card">
-  <h3>📱 Pay via UPI</h3>
-  <button id="payBtn" onclick="payUPI()">Pay Now</button>
-</div>
+  <!-- PAYMENT CARD -->
+  <div class="card">
+    <h3>📱 Pay via UPI</h3>
+    <p class="note">Pay directly to vendor</p>
+    <button onclick="payUPI()">Pay Now</button>
+  </div>
 
-<div class="card">
-  <h3>✅ Confirm Payment</h3>
-  <button id="confirmBtn" onclick="openForm()">Confirm Lunch</button>
-</div>
+  <!-- CONFIRMATION CARD -->
+  <div class="card">
+    <h3>✅ Confirm Lunch</h3>
+    <p class="note">After payment, please submit confirmation</p>
+    <button onclick="openForm()">Confirm Lunch</button>
+  </div>
 
-<p id="lockMsg" style="color:red;"></p>
+  <script>
+    /* LOAD MENU FROM ADMIN PANEL */
+    document.getElementById("menu").innerHTML =
+      localStorage.getItem("menu") || "Menu not updated";
 
-<script>
-/* ⏰ TIME LOCK */
-const now = new Date();
-const lockTime = new Date();
-lockTime.setHours(11,30,0);
+    document.getElementById("price").innerText =
+      localStorage.getItem("price") || "--";
 
-if (now > lockTime) {
-  document.getElementById("payBtn").disabled = true;
-  document.getElementById("confirmBtn").disabled = true;
-  document.getElementById("lockMsg").innerText =
-    "⛔ Lunch confirmation closed for today";
-}
+    /* UPI PAYMENT */
+    function payUPI() {
+      const amount = localStorage.getItem("price") || "";
+      const upiUrl =
+        "upi://pay?pa=vendor@upi&pn=Vendor%20Name&am=" +
+        amount +
+        "&cu=INR";
 
-/* MENU LOAD */
-document.getElementById("menu").innerHTML =
-  localStorage.getItem("menu") || "Menu not updated";
-document.getElementById("price").innerText =
-  localStorage.getItem("price") || "--";
+      window.location.href = upiUrl;
+    }
 
-/* UPI PAYMENT */
-function payUPI() {
-  window.location.href =
-    "upi://pay?pa=vendor@upi&pn=Vendor&am=" +
-    localStorage.getItem("price") +
-    "&cu=INR";
-}
+    /* GOOGLE FORM LINK */
+    function openForm() {
+      window.location.href = "https://forms.gle/YOUR_FORM_LINK";
+    }
 
-/* GOOGLE FORM */
-function openForm() {
-  window.location.href =
-    "https://forms.gle/YOUR_FORM_LINK";
-}
-
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
-</script>
+    /* REGISTER SERVICE WORKER */
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
 
 </body>
 </html>

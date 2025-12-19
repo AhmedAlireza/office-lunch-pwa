@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Office Lunch</title>
 
-  <!-- QR Generator Library -->
+  <!-- QR Generator -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
   <style>
@@ -17,7 +17,7 @@
     }
 
     .card {
-      background: #fff;
+      background: #ffffff;
       padding: 16px;
       border-radius: 10px;
       margin-bottom: 16px;
@@ -32,6 +32,17 @@
 
     canvas {
       margin-top: 12px;
+      border: 4px solid #2e7d32;
+      border-radius: 8px;
+    }
+
+    .highlight {
+      animation: glow 1s infinite alternate;
+    }
+
+    @keyframes glow {
+      from { box-shadow: 0 0 5px #2e7d32; }
+      to   { box-shadow: 0 0 15px #2e7d32; }
     }
 
     input {
@@ -55,6 +66,10 @@
       cursor: pointer;
     }
 
+    button.secondary {
+      background: #607d8b;
+    }
+
     .note {
       font-size: 13px;
       color: #555;
@@ -65,16 +80,19 @@
 
 <body>
 
-  <!-- MENU + QR -->
+  <!-- MENU + PAYMENT -->
   <div class="card">
     <h3>🍽️ Today’s Lunch</h3>
+
     <div id="menu">Loading menu...</div>
     <div class="price">Amount: ₹<span id="price">--</span></div>
 
     <canvas id="upiQR"></canvas>
 
+    <button onclick="payNow()">Pay Now</button>
+
     <p class="note">
-      Open GPay / PhonePe → Scan QR → Pay (Amount locked)
+      Pay Now → Open UPI app → Scan this QR → Enter PIN
     </p>
   </div>
 
@@ -83,9 +101,13 @@
     <h3>🧾 Confirm Lunch</h3>
 
     <input id="empName" placeholder="Your Name">
-    <input id="mobile" placeholder="Transaction Mobile Number">
+    <input id="txnLast4" placeholder="Last 4 digits of Transaction ID" maxlength="4">
 
-    <button onclick="confirmLunch()">Confirm Lunch</button>
+    <button class="secondary" onclick="confirmLunch()">Confirm Lunch</button>
+
+    <p class="note">
+      Enter last 4 digits shown in your UPI app after payment
+    </p>
   </div>
 
   <script>
@@ -102,7 +124,7 @@
 
     let currentAmount = "";
 
-    /* ========= LOAD MENU + GENERATE QR ========= */
+    /* ========= LOAD MENU + GENERATE DYNAMIC QR ========= */
     fetch(MENU_API)
       .then(r => r.json())
       .then(data => {
@@ -133,26 +155,43 @@
       });
     }
 
+    /* ========= PAY NOW ========= */
+    function payNow() {
+      // Highlight QR for guidance
+      const qr = document.getElementById("upiQR");
+      qr.classList.add("highlight");
+
+      // Open UPI app home (user must tap Scan)
+      window.location.href = "upi://";
+
+      setTimeout(() => {
+        qr.classList.remove("highlight");
+      }, 3000);
+    }
+
     /* ========= CONFIRM LUNCH ========= */
     function confirmLunch() {
       const name = empName.value.trim();
-      const mobile = mobile.value.trim();
+      const last4 = txnLast4.value.trim();
 
-      if (!name || !mobile) {
-        alert("Enter name and mobile");
+      if (!name || !last4 || last4.length !== 4) {
+        alert("Enter your name and last 4 digits of transaction ID");
         return;
       }
 
       fetch(TRACKER_API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, mobile })
+        body: JSON.stringify({
+          name: name,
+          txnLast4: last4
+        })
       })
       .then(r => r.json())
       .then(res => {
         if (res.status === "SUCCESS") {
           document.body.innerHTML =
-            "<h2>✅ Thank you!</h2><p>Lunch confirmed.</p>";
+            "<h2>✅ Thank you!</h2><p>Your lunch is confirmed.</p>";
           setTimeout(() => window.close(), 2000);
         } else {
           alert("Error saving confirmation");

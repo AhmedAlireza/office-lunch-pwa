@@ -93,7 +93,7 @@
 <!-- ================= HIDDEN FORM (KEY PART) ================= -->
 <form id="confirmForm"
       method="POST"
-      action="https://script.google.com/macros/s/AKfycbzE5gD1dnwRp2RObcxfs79P569S7ExO8mY1cL83Y3vTk2HxVAaNma46IsaCpacyJnD7ug/exec"
+      action="https://script.google.com/macros/s/AKfycbyFDMDg9zo3FRDrAHNbQ_gnHV7gL98OsJhf7gWyJ9cCqS0r6dyfleEzqiOA9VfSe2bWFA/exec"
       style="display:none;">
   <input type="hidden" name="payload" id="payload">
 </form>
@@ -111,4 +111,80 @@ const VENDOR_NAME = "Sasi S";
 
 let amount = "";
 
-/* ========= LOAD MENU =====*
+/* ========= LOAD MENU ========= */
+fetch(MENU_API)
+  .then(r => r.json())
+  .then(d => {
+    document.getElementById("menu").innerText =
+      d.menu || "Menu not available";
+    amount = d.price;
+    document.getElementById("price").innerText = amount;
+    generateQR(amount);
+  })
+  .catch(() => {
+    document.getElementById("menu").innerText = "Unable to load menu";
+  });
+
+/* ========= GENERATE QR ========= */
+function generateQR(amt) {
+  const ref = "LUNCH" + Date.now();
+  const upi =
+    `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
+    `&pn=${encodeURIComponent(VENDOR_NAME)}` +
+    `&am=${encodeURIComponent(amt)}` +
+    `&cu=INR` +
+    `&tn=Office Lunch` +
+    `&tr=${ref}`;
+
+  new QRious({
+    element: document.getElementById("upiQR"),
+    value: upi,
+    size: 220
+  });
+}
+
+/* ========= PAY VIA UPI APP ========= */
+function payViaUPI() {
+  if (!amount) {
+    alert("Amount not loaded yet");
+    return;
+  }
+  const ref = "LUNCH" + Date.now();
+  const url =
+    `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
+    `&pn=${encodeURIComponent(VENDOR_NAME)}` +
+    `&am=${encodeURIComponent(amount)}` +
+    `&cu=INR` +
+    `&tn=Office Lunch` +
+    `&tr=${ref}`;
+
+  window.location.href = url;
+}
+
+/* ========= CONFIRM LUNCH (FORM POST) ========= */
+function confirmLunch() {
+  const name = document.getElementById("empName").value.trim();
+  const txn = document.getElementById("txnLast4").value.trim();
+
+  if (!name || txn.length !== 4) {
+    alert("Please enter Name and last 4 digits of Transaction ID");
+    return;
+  }
+
+  const data = {
+    name: name,
+    txnLast4: txn
+  };
+
+  document.getElementById("payload").value =
+    JSON.stringify(data);
+
+  document.getElementById("confirmForm").submit();
+
+  document.body.innerHTML =
+    "<h2>✅ Thank you!</h2><p>Your lunch is confirmed.</p>";
+}
+</script>
+
+</body>
+</html>

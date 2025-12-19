@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Office Lunch</title>
+
+  <!-- QR Generator Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
   <style>
     body {
@@ -14,20 +17,30 @@
     }
 
     .card {
-      background: #ffffff;
+      background: #fff;
       padding: 16px;
       border-radius: 10px;
       margin-bottom: 16px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
-    .upi-text {
-      padding: 12px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+    .price {
+      font-size: 18px;
       font-weight: bold;
-      background: #f9f9f9;
-      margin-bottom: 10px;
+      margin-top: 8px;
+    }
+
+    canvas {
+      margin-top: 12px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
 
     button {
@@ -38,23 +51,8 @@
       border: none;
       background: #2e7d32;
       color: #fff;
-      margin-top: 10px;
+      margin-top: 12px;
       cursor: pointer;
-    }
-
-    button:hover {
-      background: #256428;
-    }
-
-    .radio {
-      text-align: left;
-      margin-top: 10px;
-    }
-
-    .radio label {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
     }
 
     .note {
@@ -67,89 +65,102 @@
 
 <body>
 
-  <!-- PAYMENT CARD -->
+  <!-- MENU + QR -->
   <div class="card">
-    <h3>📱 Pay via UPI</h3>
+    <h3>🍽️ Today’s Lunch</h3>
+    <div id="menu">Loading menu...</div>
+    <div class="price">Amount: ₹<span id="price">--</span></div>
 
-    <div class="upi-text" id="upiId">ss8001082@okaxis</div>
-    <div class="upi-text">Vendor: Sasi S</div>
-    <div class="upi-text">Amount: ₹<span id="amount">80</span></div>
-
-    <div class="radio">
-      <label>
-        <input type="radio" name="upiApp" value="gpay">
-        Google Pay
-      </label>
-      <label>
-        <input type="radio" name="upiApp" value="phonepe">
-        PhonePe
-      </label>
-    </div>
-
-    <button onclick="payUPI()">OK</button>
+    <canvas id="upiQR"></canvas>
 
     <p class="note">
-      Select UPI app → Click OK → Confirm payment in the app
+      Open GPay / PhonePe → Scan QR → Pay (Amount locked)
     </p>
   </div>
 
+  <!-- CONFIRMATION -->
+  <div class="card">
+    <h3>🧾 Confirm Lunch</h3>
+
+    <input id="empName" placeholder="Your Name">
+    <input id="mobile" placeholder="Transaction Mobile Number">
+
+    <button onclick="confirmLunch()">Confirm Lunch</button>
+  </div>
+
   <script>
-    /* ================= CONFIG ================= */
+    /* ========= CONFIG ========= */
+
+    const MENU_API =
+      "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
+
+    const TRACKER_API =
+      "https://script.google.com/macros/s/AKfycbzuBhQ0RMVEA85WzzU2y3I-8Hv4ATZrIGYT7ZNAiZ0NDCmOCjMqG0BoeHZBPEvKbe0rgw/exec";
 
     const UPI_ID = "ss8001082@okaxis";
     const VENDOR_NAME = "Sasi S";
 
-    /* ================= PAY UPI ================= */
-    function payUPI() {
-      const selected =
-        document.querySelector('input[name="upiApp"]:checked');
+    let currentAmount = "";
 
-      if (!selected) {
-        alert("Please select a UPI app");
-        return;
-      }
+    /* ========= LOAD MENU + GENERATE QR ========= */
+    fetch(MENU_API)
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById("menu").innerText =
+          data.menu || "Menu not available";
 
-      const amount =
-        document.getElementById("amount").innerText;
+        currentAmount = data.price;
+        document.getElementById("price").innerText = currentAmount;
 
-      if (!amount || isNaN(amount)) {
-        alert("Invalid amount");
-        return;
-      }
+        generateQR(currentAmount);
+      });
 
-      // Unique transaction reference (important)
+    function generateQR(amount) {
       const txnRef = "LUNCH" + Date.now();
 
-      // UPI parameters (CRITICAL: tn & tr added)
-      const upiParams =
-        `pa=${encodeURIComponent(UPI_ID)}` +
+      const upiString =
+        `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
         `&pn=${encodeURIComponent(VENDOR_NAME)}` +
         `&am=${encodeURIComponent(amount)}` +
         `&cu=INR` +
-        `&tn=${encodeURIComponent("Office Lunch Payment")}` +
-        `&tr=${encodeURIComponent(txnRef)}`;
+        `&tn=Office Lunch` +
+        `&tr=${txnRef}`;
 
-      // Default UPI intent
-      let upiUrl = `upi://pay?${upiParams}`;
+      new QRious({
+        element: document.getElementById("upiQR"),
+        value: upiString,
+        size: 220
+      });
+    }
 
-      // App-specific deep links
-      if (selected.value === "gpay") {
-        upiUrl = `tez://upi/pay?${upiParams}`;
-      } else if (selected.value === "phonepe") {
-        upiUrl = `phonepe://pay?${upiParams}`;
+    /* ========= CONFIRM LUNCH ========= */
+    function confirmLunch() {
+      const name = empName.value.trim();
+      const mobile = mobile.value.trim();
+
+      if (!name || !mobile) {
+        alert("Enter name and mobile");
+        return;
       }
 
-      // Redirect to UPI app
-      window.location.href = upiUrl;
-
-      // Fallback (if selected app not installed)
-      setTimeout(() => {
-        window.location.href = `upi://pay?${upiParams}`;
-      }, 1500);
+      fetch(TRACKER_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, mobile })
+      })
+      .then(r => r.json())
+      .then(res => {
+        if (res.status === "SUCCESS") {
+          document.body.innerHTML =
+            "<h2>✅ Thank you!</h2><p>Lunch confirmed.</p>";
+          setTimeout(() => window.close(), 2000);
+        } else {
+          alert("Error saving confirmation");
+        }
+      })
+      .catch(() => alert("Network error"));
     }
   </script>
 
 </body>
 </html>
-
-

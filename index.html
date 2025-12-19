@@ -14,11 +14,11 @@
     }
 
     .card {
-      background: #fff;
+      background: #ffffff;
       padding: 16px;
       border-radius: 10px;
       margin-bottom: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     .upi-text {
@@ -42,6 +42,10 @@
       cursor: pointer;
     }
 
+    button:hover {
+      background: #256428;
+    }
+
     .radio {
       text-align: left;
       margin-top: 10px;
@@ -50,6 +54,13 @@
     .radio label {
       display: block;
       margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .note {
+      font-size: 13px;
+      color: #555;
+      margin-top: 6px;
     }
   </style>
 </head>
@@ -60,28 +71,35 @@
   <div class="card">
     <h3>📱 Pay via UPI</h3>
 
-    <div class="upi-text" id="upiId">9566433427@ybl</div>
-    <div class="upi-text">Vendor: Sasi Canteens</div>
+    <div class="upi-text" id="upiId">ss8001082@okaxis</div>
+    <div class="upi-text">Vendor: Sasi S</div>
     <div class="upi-text">Amount: ₹<span id="amount">50</span></div>
 
     <div class="radio">
       <label>
-        <input type="radio" name="upiApp" value="gpay"> Google Pay
+        <input type="radio" name="upiApp" value="gpay">
+        Google Pay
       </label>
       <label>
-        <input type="radio" name="upiApp" value="phonepe"> PhonePe
+        <input type="radio" name="upiApp" value="phonepe">
+        PhonePe
       </label>
     </div>
 
     <button onclick="payUPI()">OK</button>
+
+    <p class="note">
+      Select UPI app → Click OK → Confirm payment in the app
+    </p>
   </div>
 
   <script>
-    // 🔧 CONFIG (CHANGE ONLY THESE)
+    /* ================= CONFIG ================= */
+
     const UPI_ID = "ss8001082@okaxis";
     const VENDOR_NAME = "Sasi S";
-    const AMOUNT = "1";
 
+    /* ================= PAY UPI ================= */
     function payUPI() {
       const selected =
         document.querySelector('input[name="upiApp"]:checked');
@@ -91,18 +109,43 @@
         return;
       }
 
-      const baseParams =
-        `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
-        `&pn=${encodeURIComponent(VENDOR_NAME)}` +
-        `&am=${encodeURIComponent(AMOUNT)}` +
-        `&cu=INR`;
+      const amount =
+        document.getElementById("amount").innerText;
 
-      if (selected.value === "gpay") {
-        window.location.href = "tez://upi/pay?" + baseParams.split("?")[1];
-      } 
-      else if (selected.value === "phonepe") {
-        window.location.href = "phonepe://pay?" + baseParams.split("?")[1];
+      if (!amount || isNaN(amount)) {
+        alert("Invalid amount");
+        return;
       }
+
+      // Unique transaction reference (important)
+      const txnRef = "LUNCH" + Date.now();
+
+      // UPI parameters (CRITICAL: tn & tr added)
+      const upiParams =
+        `pa=${encodeURIComponent(UPI_ID)}` +
+        `&pn=${encodeURIComponent(VENDOR_NAME)}` +
+        `&am=${encodeURIComponent(amount)}` +
+        `&cu=INR` +
+        `&tn=${encodeURIComponent("Office Lunch Payment")}` +
+        `&tr=${encodeURIComponent(txnRef)}`;
+
+      // Default UPI intent
+      let upiUrl = `upi://pay?${upiParams}`;
+
+      // App-specific deep links
+      if (selected.value === "gpay") {
+        upiUrl = `tez://upi/pay?${upiParams}`;
+      } else if (selected.value === "phonepe") {
+        upiUrl = `phonepe://pay?${upiParams}`;
+      }
+
+      // Redirect to UPI app
+      window.location.href = upiUrl;
+
+      // Fallback (if selected app not installed)
+      setTimeout(() => {
+        window.location.href = `upi://pay?${upiParams}`;
+      }, 1500);
     }
   </script>
 

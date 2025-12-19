@@ -1,166 +1,86 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Office Lunch</title>
-
-  <!-- QR Generator -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      padding: 16px;
-      text-align: center;
-    }
-    .card {
-      background: #fff;
-      padding: 16px;
-      border-radius: 10px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,.1);
-    }
-    .price {
-      font-size: 18px;
-      font-weight: bold;
-      margin: 8px 0;
-    }
-    canvas {
-      margin-top: 10px;
-      border: 4px solid #2e7d32;
-      border-radius: 8px;
-    }
-    button {
-      width: 100%;
-      padding: 14px;
-      margin-top: 10px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      color: #fff;
-    }
-    .btn-green { background: #2e7d32; }
-    .btn-orange { background: #ef6c00; }
-    .btn-grey { background: #607d8b; }
-    input {
-      width: 100%;
-      padding: 12px;
-      margin-top: 10px;
-      font-size: 15px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-    .note {
-      font-size: 13px;
-      color: #555;
-      margin-top: 6px;
-    }
+    body { font-family: Arial; background:#f4f6f8; padding:16px; text-align:center; }
+    .card { background:#fff; padding:16px; border-radius:10px; margin-bottom:16px; }
+    canvas { margin-top:10px; border:4px solid #2e7d32; border-radius:8px; }
+    button { width:100%; padding:14px; margin-top:10px; font-size:16px; border-radius:8px; border:none; color:#fff; }
+    .green { background:#2e7d32; }
+    .orange { background:#ef6c00; }
+    .grey { background:#607d8b; }
+    input { width:100%; padding:12px; margin-top:10px; }
   </style>
 </head>
 
 <body>
 
-  <!-- MENU + PAYMENT -->
-  <div class="card">
-    <h3>🍽️ Today’s Lunch</h3>
-    <div id="menu">Loading...</div>
-    <div class="price">Amount: ₹<span id="price">--</span></div>
+<div class="card">
+  <h3>🍽 Today’s Lunch</h3>
+  <div id="menu">Loading...</div>
+  <h3>Amount: ₹<span id="price">--</span></h3>
 
-    <!-- PRIMARY: QR -->
-    <h4>🟢 Scan QR (Recommended)</h4>
-    <canvas id="upiQR"></canvas>
-    <p class="note">Open GPay / PhonePe → Scan → Pay (No limit)</p>
+  <h4>🟢 Scan QR (Recommended)</h4>
+  <canvas id="upiQR"></canvas>
 
-    <!-- SECONDARY: DEEP LINK -->
-    <h4 style="margin-top:16px;">🟡 Pay via UPI App</h4>
-    <button class="btn-orange" onclick="payViaUPI()">
-      Pay Now (≤ ₹2000)
-    </button>
-    <p class="note">May fail for higher amounts due to bank limits</p>
-  </div>
+  <h4>🟡 Pay via UPI App (≤ ₹2000)</h4>
+  <button class="orange" onclick="payViaUPI()">Pay Now</button>
+</div>
 
-  <!-- CONFIRM -->
-  <div class="card">
-    <h3>🧾 Confirm Lunch</h3>
-    <input id="empName" placeholder="Your Name">
-    <input id="txnLast4" placeholder="Last 4 digits of Txn ID" maxlength="4">
-    <button class="btn-grey" onclick="confirmLunch()">Confirm Lunch</button>
-  </div>
+<div class="card">
+  <h3>🧾 Confirm Lunch</h3>
+  <input id="name" placeholder="Your Name">
+  <input id="txn" placeholder="Last 4 digits of Txn ID" maxlength="4">
+  <button class="grey" onclick="confirm()">Confirm Lunch</button>
+</div>
 
-  <script>
-    /* ===== CONFIG ===== */
-    const MENU_API = "PASTE_MENU_API_URL";
-    const TRACKER_API = "PASTE_TRACKER_API_URL";
+<script>
+const MENU_API = "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
+const TRACKER_API = "https://script.google.com/macros/s/AKfycbzuBhQ0RMVEA85WzzU2y3I-8Hv4ATZrIGYT7ZNAiZ0NDCmOCjMqG0BoeHZBPEvKbe0rgw/exec";
+const UPI_ID = "ss8001082@okaxis";
+const VENDOR = "Sasi S";
+let amt = "";
 
-    const UPI_ID = "ss8001082@okaxis";
-    const VENDOR_NAME = "Sasi S";
+fetch(MENU_API)
+.then(r=>r.json())
+.then(d=>{
+  document.getElementById("menu").innerText = d.menu;
+  document.getElementById("price").innerText = d.price;
+  amt = d.price;
+  genQR();
+});
 
-    let amount = "";
+function genQR(){
+  const ref="LUNCH"+Date.now();
+  new QRious({
+    element:document.getElementById("upiQR"),
+    value:`upi://pay?pa=${UPI_ID}&pn=${VENDOR}&am=${amt}&cu=INR&tn=Office Lunch&tr=${ref}`,
+    size:220
+  });
+}
 
-    /* ===== LOAD MENU ===== */
-    fetch(MENU_API)
-      .then(r => r.json())
-      .then(d => {
-        document.getElementById("menu").innerText = d.menu;
-        amount = d.price;
-        document.getElementById("price").innerText = amount;
-        generateQR(amount);
-      });
+function payViaUPI(){
+  window.location.href=`upi://pay?pa=${UPI_ID}&pn=${VENDOR}&am=${amt}&cu=INR`;
+}
 
-    /* ===== GENERATE DYNAMIC QR ===== */
-    function generateQR(amt) {
-      const ref = "LUNCH" + Date.now();
-      const upi =
-        `upi://pay?pa=${UPI_ID}&pn=${VENDOR_NAME}&am=${amt}&cu=INR&tn=Office Lunch&tr=${ref}`;
-      new QRious({
-        element: document.getElementById("upiQR"),
-        value: upi,
-        size: 220
-      });
-    }
-
-    /* ===== PAY VIA DEEP LINK ===== */
-    function payViaUPI() {
-      if (!amount) {
-        alert("Amount not loaded");
-        return;
-      }
-      const ref = "LUNCH" + Date.now();
-      const url =
-        `upi://pay?pa=${UPI_ID}&pn=${VENDOR_NAME}&am=${amount}&cu=INR&tn=Office Lunch&tr=${ref}`;
-      window.location.href = url;
-    }
-
-    /* ===== CONFIRM ===== */
-    function confirmLunch() {
-      const name = empName.value.trim();
-      const txn = txnLast4.value.trim();
-
-      if (!name || txn.length !== 4) {
-        alert("Enter name and last 4 digits of transaction ID");
-        return;
-      }
-
-      fetch(TRACKER_API, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, txnLast4: txn })
-      })
-      .then(r => r.json())
-      .then(res => {
-        if (res.status === "SUCCESS") {
-          document.body.innerHTML =
-            "<h2>✅ Thank you!</h2><p>Lunch confirmed.</p>";
-        } else {
-          alert("Error saving data");
-        }
-      })
-      .catch(() => alert("Network error"));
-    }
-  </script>
+function confirm(){
+  fetch(TRACKER_API,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      name:name.value,
+      txnLast4:txn.value
+    })
+  }).then(r=>r.json())
+   .then(()=>alert("Lunch Confirmed"))
+   .catch(()=>alert("Network error"));
+}
+</script>
 
 </body>
 </html>

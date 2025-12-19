@@ -15,27 +15,24 @@
       padding: 16px;
       text-align: center;
     }
-
     .card {
-      background: #ffffff;
+      background: #fff;
       padding: 16px;
       border-radius: 10px;
       margin-bottom: 16px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0,0,0,.1);
     }
-
-    canvas {
-      margin-top: 10px;
-      border: 4px solid #2e7d32;
-      border-radius: 8px;
-    }
-
+    h3 { margin-top: 0; }
     .price {
       font-size: 18px;
       font-weight: bold;
       margin: 8px 0;
     }
-
+    canvas {
+      margin-top: 10px;
+      border: 4px solid #2e7d32;
+      border-radius: 8px;
+    }
     input {
       width: 100%;
       padding: 12px;
@@ -44,7 +41,6 @@
       border-radius: 6px;
       border: 1px solid #ccc;
     }
-
     button {
       width: 100%;
       padding: 14px;
@@ -55,11 +51,9 @@
       cursor: pointer;
       color: #fff;
     }
-
     .green { background: #2e7d32; }
     .orange { background: #ef6c00; }
     .grey { background: #607d8b; }
-
     .note {
       font-size: 13px;
       color: #555;
@@ -70,114 +64,51 @@
 
 <body>
 
-  <!-- MENU & PAYMENT -->
-  <div class="card">
-    <h3>🍽️ Today’s Lunch</h3>
-    <div id="menu">Loading menu...</div>
-    <div class="price">Amount: ₹<span id="price">--</span></div>
+<!-- ================= MENU + PAYMENT ================= -->
+<div class="card">
+  <h3>🍽️ Today’s Lunch</h3>
 
-    <h4>🟢 Scan QR (Recommended)</h4>
-    <canvas id="upiQR"></canvas>
-    <p class="note">Open GPay / PhonePe → Scan → Pay (No limit)</p>
+  <div id="menu">Loading menu...</div>
+  <div class="price">Amount: ₹<span id="price">--</span></div>
 
-    <h4>🟡 Pay via UPI App (≤ ₹2000)</h4>
-    <button class="orange" onclick="payViaUPI()">Pay Now</button>
-    <p class="note">UPI app limits may apply</p>
-  </div>
+  <h4>🟢 Scan QR (Recommended)</h4>
+  <canvas id="upiQR"></canvas>
+  <p class="note">Open GPay / PhonePe → Scan → Pay (No limit)</p>
 
-  <!-- CONFIRM -->
-  <div class="card">
-    <h3>🧾 Confirm Lunch</h3>
-    <input id="empName" placeholder="Your Name">
-    <input id="txnLast4" placeholder="Last 4 digits of Transaction ID" maxlength="4">
-    <button class="grey" onclick="confirmLunch()">Confirm Lunch</button>
-  </div>
+  <h4>🟡 Pay via UPI App (≤ ₹2000)</h4>
+  <button class="orange" onclick="payViaUPI()">Pay Now</button>
+  <p class="note">UPI app limits may apply</p>
+</div>
 
-  <!-- HIDDEN FORM (IMPORTANT) -->
-  <form id="confirmForm"
-        method="POST"
-        action="https://script.google.com/macros/s/AKfycbyFDMDg9zo3FRDrAHNbQ_gnHV7gL98OsJhf7gWyJ9cCqS0r6dyfleEzqiOA9VfSe2bWFA/exec"
-        style="display:none;">
-    <input type="hidden" name="payload" id="payload">
-  </form>
+<!-- ================= CONFIRM ================= -->
+<div class="card">
+  <h3>🧾 Confirm Lunch</h3>
 
-  <script>
-    /* ========= CONFIG ========= */
+  <input id="empName" placeholder="Your Name">
+  <input id="txnLast4" placeholder="Last 4 digits of Transaction ID" maxlength="4">
 
-    // MENU API (same as before)
-    const MENU_API =
-      "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
+  <button class="grey" onclick="confirmLunch()">Confirm Lunch</button>
+</div>
 
-    const UPI_ID = "ss8001082@okaxis";
-    const VENDOR_NAME = "Sasi S";
+<!-- ================= HIDDEN FORM (KEY PART) ================= -->
+<form id="confirmForm"
+      method="POST"
+      action="https://script.google.com/macros/s/AKfycbzE5gD1dnwRp2RObcxfs79P569S7ExO8mY1cL83Y3vTk2HxVAaNma46IsaCpacyJnD7ug/exec"
+      style="display:none;">
+  <input type="hidden" name="payload" id="payload">
+</form>
 
-    let amount = "";
+<script>
+/* ========= CONFIG ========= */
 
-    /* ========= LOAD MENU ========= */
-    fetch(MENU_API)
-      .then(r => r.json())
-      .then(d => {
-        document.getElementById("menu").innerText =
-          d.menu || "Menu not available";
-        amount = d.price;
-        document.getElementById("price").innerText = amount;
-        generateQR(amount);
-      })
-      .catch(() => {
-        document.getElementById("menu").innerText = "Unable to load menu";
-      });
+// MENU API (READ ONLY)
+const MENU_API =
+  "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
 
-    /* ========= GENERATE DYNAMIC QR ========= */
-    function generateQR(amt) {
-      const ref = "LUNCH" + Date.now();
-      const upi =
-        `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
-        `&pn=${encodeURIComponent(VENDOR_NAME)}` +
-        `&am=${encodeURIComponent(amt)}` +
-        `&cu=INR` +
-        `&tn=Office Lunch` +
-        `&tr=${ref}`;
+// UPI DETAILS
+const UPI_ID = "ss8001082@okaxis";
+const VENDOR_NAME = "Sasi S";
 
-      new QRious({
-        element: document.getElementById("upiQR"),
-        value: upi,
-        size: 220
-      });
-    }
+let amount = "";
 
-    /* ========= PAY VIA DEEP LINK ========= */
-    function payViaUPI() {
-      if (!amount) {
-        alert("Amount not loaded yet");
-        return;
-      }
-
-      const ref = "LUNCH" + Date.now();
-      const url =
-        `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
-        `&pn=${encodeURIComponent(VENDOR_NAME)}` +
-        `&am=${encodeURIComponent(amount)}` +
-        `&cu=INR` +
-        `&tn=Office Lunch` +
-        `&tr=${ref}`;
-
-      window.location.href = url;
-    }
-
-    /* ========= CONFIRM LUNCH (FORM POST) ========= */
-    function confirmLunch() {
-      const name = document.getElementById("empName").value.trim();
-      const txn = document.getElementById("txnLast4").value.trim();
-
-      if (!name || txn.length !== 4) {
-        alert("Please enter Name and last 4 digits of Transaction ID");
-        return;
-      }
-
-      const data = {
-        name: name,
-        txnLast4: txn
-      };
-
-      document.getElementById("payload").value =
-        JSON.s
+/* ========= LOAD MENU =====*

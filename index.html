@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Office Lunch</title>
 
-  <!-- QR Generator -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -28,21 +25,6 @@
       font-size: 18px;
       font-weight: bold;
       margin-top: 8px;
-    }
-
-    canvas {
-      margin-top: 12px;
-      border: 4px solid #2e7d32;
-      border-radius: 8px;
-    }
-
-    .highlight {
-      animation: glow 1s infinite alternate;
-    }
-
-    @keyframes glow {
-      from { box-shadow: 0 0 5px #2e7d32; }
-      to   { box-shadow: 0 0 15px #2e7d32; }
     }
 
     input {
@@ -66,10 +48,6 @@
       cursor: pointer;
     }
 
-    button.secondary {
-      background: #607d8b;
-    }
-
     .note {
       font-size: 13px;
       color: #555;
@@ -80,38 +58,35 @@
 
 <body>
 
-  <!-- MENU + PAYMENT -->
+  <!-- MENU -->
   <div class="card">
     <h3>🍽️ Today’s Lunch</h3>
-
     <div id="menu">Loading menu...</div>
     <div class="price">Amount: ₹<span id="price">--</span></div>
-
-    <canvas id="upiQR"></canvas>
 
     <button onclick="payNow()">Pay Now</button>
 
     <p class="note">
-      Pay Now → Open UPI app → Scan this QR → Enter PIN
+      Pay Now → Choose UPI app → Enter PIN
     </p>
   </div>
 
-  <!-- CONFIRMATION -->
+  <!-- CONFIRM -->
   <div class="card">
     <h3>🧾 Confirm Lunch</h3>
 
     <input id="empName" placeholder="Your Name">
     <input id="txnLast4" placeholder="Last 4 digits of Transaction ID" maxlength="4">
 
-    <button class="secondary" onclick="confirmLunch()">Confirm Lunch</button>
+    <button onclick="confirmLunch()">Confirm Lunch</button>
 
     <p class="note">
-      Enter last 4 digits shown in your UPI app after payment
+      Enter last 4 digits from UPI app after payment
     </p>
   </div>
 
   <script>
-    /* ========= CONFIG ========= */
+    /* ===== CONFIG ===== */
 
     const MENU_API =
       "https://script.google.com/macros/s/AKfycbw7i5g_xmX59blWHM0On-r8cspalpQhKdMp67HrrdesqnIXywyOrSwwBJUGk04mnRXWJg/exec";
@@ -124,74 +99,58 @@
 
     let currentAmount = "";
 
-    /* ========= LOAD MENU + GENERATE DYNAMIC QR ========= */
+    /* ===== LOAD MENU ===== */
     fetch(MENU_API)
       .then(r => r.json())
       .then(data => {
         document.getElementById("menu").innerText =
           data.menu || "Menu not available";
-
         currentAmount = data.price;
         document.getElementById("price").innerText = currentAmount;
-
-        generateQR(currentAmount);
       });
 
-    function generateQR(amount) {
+    /* ===== PAY NOW (UPI DEEP LINK) ===== */
+    function payNow() {
+      if (!currentAmount) {
+        alert("Amount not available");
+        return;
+      }
+
       const txnRef = "LUNCH" + Date.now();
 
-      const upiString =
-        `upi://pay?pa=${encodeURIComponent(UPI_ID)}` +
-        `&pn=${encodeURIComponent(VENDOR_NAME)}` +
-        `&am=${encodeURIComponent(amount)}` +
-        `&cu=INR` +
-        `&tn=Office Lunch` +
-        `&tr=${txnRef}`;
+      const upiUrl =
+        "upi://pay" +
+        "?pa=" + encodeURIComponent(UPI_ID) +
+        "&pn=" + encodeURIComponent(VENDOR_NAME) +
+        "&am=" + encodeURIComponent(currentAmount) +
+        "&cu=INR" +
+        "&tn=" + encodeURIComponent("Office Lunch") +
+        "&tr=" + encodeURIComponent(txnRef);
 
-      new QRious({
-        element: document.getElementById("upiQR"),
-        value: upiString,
-        size: 220
-      });
+      // This triggers Android UPI app chooser
+      window.location.href = upiUrl;
     }
 
-    /* ========= PAY NOW ========= */
-    function payNow() {
-      // Highlight QR for guidance
-      const qr = document.getElementById("upiQR");
-      qr.classList.add("highlight");
-
-      // Open UPI app home (user must tap Scan)
-      window.location.href = "upi://";
-
-      setTimeout(() => {
-        qr.classList.remove("highlight");
-      }, 3000);
-    }
-
-    /* ========= CONFIRM LUNCH ========= */
+    /* ===== CONFIRM LUNCH ===== */
     function confirmLunch() {
       const name = empName.value.trim();
       const last4 = txnLast4.value.trim();
 
-      if (!name || !last4 || last4.length !== 4) {
-        alert("Enter your name and last 4 digits of transaction ID");
+      if (!name || last4.length !== 4) {
+        alert("Enter name and last 4 digits of transaction ID");
         return;
       }
 
       fetch(TRACKER_API, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name,
-          txnLast4: last4
-        })
+        body: JSON.stringify({ name, txnLast4: last4 })
       })
       .then(r => r.json())
       .then(res => {
         if (res.status === "SUCCESS") {
           document.body.innerHTML =
-            "<h2>✅ Thank you!</h2><p>Your lunch is confirmed.</p>";
+            "<h2>✅ Thank you!</h2><p>Lunch confirmed.</p>";
           setTimeout(() => window.close(), 2000);
         } else {
           alert("Error saving confirmation");
